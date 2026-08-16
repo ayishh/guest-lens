@@ -60,11 +60,18 @@ const Masonry = ({
   blurToFocus = true,
   colorShiftOnHover = false
 }) => {
-  const columns = useMedia(
-    ['(min-width:1500px)', '(min-width:1000px)', '(min-width:600px)', '(min-width:400px)'],
-    [5, 4, 3, 2],
-    1
-  );
+  // const columns = useMedia(
+  //   ['(min-width:1500px)', '(min-width:1000px)', '(min-width:600px)', '(min-width:400px)'],
+  //   [5, 4, 3, 2],
+  //   1
+  // );
+
+    // Updated configuration in masonry.jsx
+    const columns = useMedia(
+    ['(min-width:1200px)', '(min-width:800px)', '(min-width:500px)'],
+    [4, 3, 2],
+    2 // Default to 2 columns for all smaller mobile screens
+    );
 
   const [containerRef, { width }] = useMeasure();
   const [imagesReady, setImagesReady] = useState(false);
