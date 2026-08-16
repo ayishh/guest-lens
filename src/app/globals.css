@@ -1,26 +1,58 @@
 @import "tailwindcss";
 
+/* Wedding theme colors — change once here, updates everywhere */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-navy-deep: #0a1628;
+  --color-navy: #14264a;
+  --color-gold: #c9a24b;
+  --color-gold-light: #d4af6a;
+  --color-ivory: #f6f1e7;
+  --color-muted: #c9c2b3;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), sans-serif;
+}
+
+/* Apply to headings that should use the elegant serif font */
+.font-display {
+  font-family: var(--font-serif), serif;
+}
+
+/* Full-page dark navy background with a soft glow, used on every page */
+.wedding-bg {
+  background: radial-gradient(
+    circle at 50% 15%,
+    var(--color-navy) 0%,
+    var(--color-navy-deep) 65%
+  );
+}
+
+/* The gold-bordered card that holds each page's content */
+.invite-card {
+  background: rgba(20, 38, 74, 0.5);
+  border: 1px solid rgba(201, 162, 75, 0.4);
+}
+
+/* Solid gold button, e.g. "Upload Photos" */
+.btn-gold {
+  background: var(--color-gold);
+  color: var(--color-navy-deep);
+  transition: background-color 0.2s ease;
+}
+.btn-gold:hover {
+  background: var(--color-gold-light);
+}
+
+/* Outlined gold button, e.g. "View Gallery" */
+.btn-gold-outline {
+  border: 1px solid var(--color-gold);
+  color: var(--color-gold);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+.btn-gold-outline:hover {
+  background: var(--color-gold);
+  color: var(--color-navy-deep);
 }
