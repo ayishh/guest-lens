@@ -2,17 +2,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import compressImage from "@/lib/compressImage";
 
 export default function UploadPage() {
+  const router = useRouter();
+
   // list of states that are stored and can be updated
   const [files, setFiles] = useState([]);             // store the list of image file that user want to upload
   const [guestName, setGuestName] = useState("");     // store the name the guest type in
   const [guestWish, setGuestWish] = useState("");     // store the wish the guest type in
   const [uploading, setUploading] = useState(false);  // track whether an upload is in progress(use for loading spinner)
-  const [done, setDone] = useState(false);            // track whether an upload is done (use for showing upload complete)
   const [error, setError] = useState("");             // store an error message if something goes wrong
 
 
@@ -74,12 +76,16 @@ export default function UploadPage() {
         await addDoc(collection(db, "photos"), {
           url: data.secure_url,
           guestName: guestName || "Anonymous",
+          guestWish: guestWish || "",
           createdAt: serverTimestamp(),
         });
       }
 
-      setDone(true);
       setFiles([]);
+
+      // Upload finished — go straight to the gallery instead of showing a
+      // "thank you" screen first.
+      router.push("/gallery");
     } catch (err) {
       // catch error if something went wrong
       console.error(err);
@@ -90,30 +96,6 @@ export default function UploadPage() {
       setUploading(false);
     }
   };
-
-  if (done) {
-    return (
-      <div className="wedding-bg min-h-[100dvh] flex items-center justify-center px-4 py-10">
-        <div className="text-center w-full max-w-xs sm:max-w-sm">
-          <div className="text-[#C9A24B] text-xs tracking-[0.3em] mb-4">
-            ✦ ✦ ✦
-          </div>
-          <h1 className="font-display text-2xl sm:text-3xl text-[#F6F1E7] mb-3">
-            Thank You
-          </h1>
-          <p className="text-[#C9C2B3] text-[15px] sm:text-sm leading-relaxed mb-8">
-            Your photos have been shared with the bride &amp; groom.
-          </p>
-          <button
-            onClick={() => setDone(false)}
-            className="btn-gold-outline text-[15px] sm:text-sm tracking-wide w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-sm"
-          >
-            Upload More Photos
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="wedding-bg min-h-[100dvh] flex items-center justify-center px-4 py-8 sm:p-6">
