@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import compressImage from "@/lib/compressImage";
+import CoupleNames from "@/components/CoupleName.jsx";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -109,9 +110,7 @@ export default function UploadPage() {
         <div className="absolute bottom-2 right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 border-b border-r border-[#C9A24B]" />
 
         <div className="text-center mb-6 px-2">
-          <p className="text-[#C9A24B] text-xs tracking-[0.3em] sm:tracking-[0.35em] mb-2">
-            Fatin &amp; Fazreen
-          </p>
+          <CoupleNames className="text-xs tracking-[0.3em] sm:tracking-[0.35em] mb-2" />
           <h1 className="font-display text-xl sm:text-2xl text-[#F6F1E7] mb-1 leading-snug">
             Share Your Photos
           </h1>

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Masonry from "@/components/masonry.jsx";
+import CoupleNames from "@/components/CoupleName.jsx";
 
 // Measures a photo's real height (scaled to a standard width) so the
 // masonry grid can lay it out proportionally instead of guessing.
@@ -47,8 +49,25 @@ function optimizedUrl(url, width = 500) {
 }
 
 export default function GalleryPage() {
+  const router = useRouter();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // for admin — secret triple-tap on the couple's names
+  const [taps, setTaps] = useState(0);
+  const tapTimeout = useRef(null);
+
+  const handleSecretTap = () => {
+    const next = taps + 1;
+    setTaps(next);
+
+    clearTimeout(tapTimeout.current);
+    tapTimeout.current = setTimeout(() => setTaps(0), 1500);
+
+    if (next >= 3) {
+      router.push("/admin");
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, "photos"), orderBy("createdAt", "desc"));
@@ -61,20 +80,20 @@ export default function GalleryPage() {
         ...doc.data(),
       }));
 
-    const withHeights = await Promise.all(
-      docs.map(async (doc) => {
-        const displayUrl = optimizedUrl(doc.url, 500);
-        const measured = await measureHeight(displayUrl);
-        return {
-          id: doc.id,
-          img: displayUrl,
-          url: doc.url,
-          height: addVariety(measured, doc.id),
-          guestName: doc.guestName || "Anonymous",
-          guestWish: doc.guestWish || "",
-        };
-      })
-    );
+      const withHeights = await Promise.all(
+        docs.map(async (doc) => {
+          const displayUrl = optimizedUrl(doc.url, 500);
+          const measured = await measureHeight(displayUrl);
+          return {
+            id: doc.id,
+            img: displayUrl,
+            url: doc.url,
+            height: addVariety(measured, doc.id),
+            guestName: doc.guestName || "Anonymous",
+            guestWish: doc.guestWish || "",
+          };
+        })
+      );
 
       setItems(withHeights);
       setLoading(false);
@@ -93,9 +112,7 @@ export default function GalleryPage() {
     >
       <div className="w-full max-w-5xl">
         <div className="text-center mb-8 sm:mb-10">
-          <p className="text-[#C9A24B] text-xs tracking-[0.3em] sm:tracking-[0.35em] mb-2">
-            Fatin &amp; Fazreen
-          </p>
+          <CoupleNames className="text-xs tracking-[0.3em] sm:tracking-[0.35em] mb-2" />
           <h1 className="font-display text-2xl sm:text-3xl text-[#F6F1E7]">
             Gallery
           </h1>
