@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CoupleNames from "@/components/CoupleName.jsx";
 
 export default function HomePage() {
   return (
@@ -11,9 +12,7 @@ export default function HomePage() {
         <div className="absolute bottom-2 left-2 w-3.5 h-3.5 sm:w-4 sm:h-4 border-b border-l border-[#C9A24B]" />
         <div className="absolute bottom-2 right-2 w-3.5 h-3.5 sm:w-4 sm:h-4 border-b border-r border-[#C9A24B]" />
   
-        <p className="text-[#C9A24B] text-xs tracking-[0.3em] sm:tracking-[0.35em] mb-2">
-          Fatin &amp; Fazreen
-        </p>
+        <CoupleNames className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
         <h1 className="font-display text-2xl sm:text-3xl text-[#F6F1E7] mb-1 leading-snug">
           Guest's Lens
