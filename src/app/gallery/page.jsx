@@ -61,18 +61,20 @@ export default function GalleryPage() {
         ...doc.data(),
       }));
 
-      const withHeights = await Promise.all(
-        docs.map(async (doc) => {
-          const displayUrl = optimizedUrl(doc.url, 500);
-          const measured = await measureHeight(displayUrl);
-          return {
-            id: doc.id,
-            img: displayUrl,
-            url: doc.url, // full-res original, opened on click
-            height: addVariety(measured, doc.id),
-          };
-        })
-      );
+    const withHeights = await Promise.all(
+      docs.map(async (doc) => {
+        const displayUrl = optimizedUrl(doc.url, 500);
+        const measured = await measureHeight(displayUrl);
+        return {
+          id: doc.id,
+          img: displayUrl,
+          url: doc.url,
+          height: addVariety(measured, doc.id),
+          guestName: doc.guestName || "Anonymous",
+          guestWish: doc.guestWish || "",
+        };
+      })
+    );
 
       setItems(withHeights);
       setLoading(false);

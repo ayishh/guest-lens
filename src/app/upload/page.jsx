@@ -97,6 +97,8 @@ export default function UploadPage() {
     }
   };
 
+  
+
   return (
     <div className="wedding-bg min-h-[100dvh] flex items-center justify-center px-4 py-8 sm:p-6">
       <div className="invite-card w-full max-w-md rounded-sm p-5 sm:p-8 relative">
