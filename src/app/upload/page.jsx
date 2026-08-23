@@ -28,6 +28,11 @@ export default function UploadPage() {
     setFiles(selected);
   };
 
+  // Removes a single file from the preview list before upload, by its index
+  const handleRemoveFile = (indexToRemove) => {
+    setFiles((prev) => prev.filter((_, i) => i !== indexToRemove));
+  };
+
   // A function that handles upload. It uses async because it uses await to wait for the upload to finish
   const handleUpload = async () => {
     // Safety check : if no files were selected,  show an error message and return
@@ -154,12 +159,22 @@ export default function UploadPage() {
         {files.length > 0 && (
           <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-4">
             {files.map((file, i) => (
-              <img
-                key={i}
-                src={URL.createObjectURL(file)}
-                alt="preview"
-                className="w-full aspect-square object-cover rounded-sm border border-[#C9A24B]/40"
-              />
+              <div key={i} className="relative">
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="preview"
+                  className="w-full aspect-square object-cover rounded-sm border border-[#C9A24B]/40"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveFile(i)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center
+                             rounded-full bg-[#0A1628] border border-[#C9A24B]/60 text-[#C9A24B]
+                             text-xs leading-none"
+                >
+                  ✕
+                </button>
+              </div>
             ))}
           </div>
         )}
