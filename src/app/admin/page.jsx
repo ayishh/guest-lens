@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
@@ -117,6 +118,28 @@ export default function AdminPage() {
       }}
     >
       <div className="max-w-5xl mx-auto">
+        {/* nav — quick links to the rest of the site */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <Link
+            href="/"
+            className="text-[11px] sm:text-xs px-3 py-1.5 rounded-sm border border-[#C9A24B]/40 text-[#C9A24B] hover:bg-[#C9A24B]/10 transition-colors"
+          >
+            Main
+          </Link>
+          <Link
+            href="/upload"
+            className="text-[11px] sm:text-xs px-3 py-1.5 rounded-sm border border-[#C9A24B]/40 text-[#C9A24B] hover:bg-[#C9A24B]/10 transition-colors"
+          >
+            Upload
+          </Link>
+          <Link
+            href="/gallery"
+            className="text-[11px] sm:text-xs px-3 py-1.5 rounded-sm border border-[#C9A24B]/40 text-[#C9A24B] hover:bg-[#C9A24B]/10 transition-colors"
+          >
+            Gallery
+          </Link>
+        </div>
+
         <div className="text-center mb-8">
           <p className="text-[#C9A24B] text-xs tracking-[0.3em] mb-2">
             Fatin &amp; Fazreen
