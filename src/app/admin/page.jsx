@@ -1,7 +1,7 @@
 // app/admin/page.jsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
@@ -13,6 +13,7 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [photos, setPhotos] = useState([]);
   const [busyId, setBusyId] = useState(null);
+  const [filter, setFilter] = useState("all"); // "all" | "visible" | "hidden"
 
   // listen for real Firebase auth state, not just sessionStorage
   useEffect(() => {
@@ -73,6 +74,20 @@ export default function AdminPage() {
       setBusyId(null);
     }
   };
+
+  // derive stats + filtered list from the full photos array
+  const totalCount = photos.length;
+  const hiddenCount = useMemo(
+    () => photos.filter((p) => p.hidden).length,
+    [photos]
+  );
+  const visibleCount = totalCount - hiddenCount;
+
+  const filteredPhotos = useMemo(() => {
+    if (filter === "hidden") return photos.filter((p) => p.hidden);
+    if (filter === "visible") return photos.filter((p) => !p.hidden);
+    return photos;
+  }, [photos, filter]);
 
   if (!authed) {
     return (
@@ -140,21 +155,78 @@ export default function AdminPage() {
           </Link>
         </div>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <p className="text-[#C9A24B] text-xs tracking-[0.3em] mb-2">
             Fatin &amp; Fazreen
           </p>
           <h1 className="font-display text-2xl text-[#F6F1E7]">
-            Manage Photos ({photos.length})
+            Manage Photos
           </h1>
         </div>
 
-        {photos.length === 0 && (
-          <p className="text-center text-[#C9C2B3] text-sm">No photos yet.</p>
+        {/* stats bar */}
+        <div className="flex items-center justify-center gap-6 sm:gap-10 mb-6">
+          <div className="text-center">
+            <p className="text-[#F6F1E7] text-xl sm:text-2xl font-display">
+              {totalCount}
+            </p>
+            <p className="text-[#C9C2B3] text-[10px] sm:text-xs tracking-wide uppercase">
+              Total
+            </p>
+          </div>
+          <div className="w-px h-8 bg-[#C9A24B]/30" />
+          <div className="text-center">
+            <p className="text-[#F6F1E7] text-xl sm:text-2xl font-display">
+              {visibleCount}
+            </p>
+            <p className="text-[#C9C2B3] text-[10px] sm:text-xs tracking-wide uppercase">
+              Visible
+            </p>
+          </div>
+          <div className="w-px h-8 bg-[#C9A24B]/30" />
+          <div className="text-center">
+            <p className="text-[#F6F1E7] text-xl sm:text-2xl font-display">
+              {hiddenCount}
+            </p>
+            <p className="text-[#C9C2B3] text-[10px] sm:text-xs tracking-wide uppercase">
+              Hidden
+            </p>
+          </div>
+        </div>
+
+        {/* filter buttons */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          {[
+            { key: "all", label: "All" },
+            { key: "visible", label: "Visible" },
+            { key: "hidden", label: "Hidden" },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setFilter(opt.key)}
+              className={`text-[11px] sm:text-xs px-3.5 py-1.5 rounded-sm border transition-colors ${
+                filter === opt.key
+                  ? "bg-[#C9A24B] text-[#0A1628] border-[#C9A24B] font-medium"
+                  : "border-[#C9A24B]/40 text-[#C9A24B] hover:bg-[#C9A24B]/10"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {filteredPhotos.length === 0 && (
+          <p className="text-center text-[#C9C2B3] text-sm">
+            {filter === "hidden"
+              ? "No hidden photos."
+              : filter === "visible"
+              ? "No visible photos."
+              : "No photos yet."}
+          </p>
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {photos.map((photo) => (
+          {filteredPhotos.map((photo) => (
             <div
               key={photo.id}
               className="invite-card rounded-sm overflow-hidden p-2 flex flex-col h-full"
@@ -170,7 +242,7 @@ export default function AdminPage() {
                   {photo.guestName || "Anonymous"}
                 </p>
                 {photo.guestWish && (
-                  <p className="text-[#C9C2B3] text-[11px] italic truncate">
+                  <p className="text-[#C9C2B3] text-[11px] italic leading-snug line-clamp-3">
                     "{photo.guestWish}"
                   </p>
                 )}

@@ -33,8 +33,6 @@ function hashString(str) {
 }
 
 // Nudges the real height taller or shorter, purely for visual variety.
-// Photos crop to fill their box (background-size: cover), so this never
-// stretches or distorts a photo — it just shows a bit more or less of it.
 function addVariety(baseHeight, id) {
   const hash = hashString(id);
   const factor = 0.65 + (hash % 100 / 100) * 0.85; // roughly 0.65x–1.5x
@@ -49,25 +47,8 @@ function optimizedUrl(url, width = 500) {
 }
 
 export default function GalleryPage() {
-  const router = useRouter();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // for admin — secret triple-tap on the couple's names
-  const [taps, setTaps] = useState(0);
-  const tapTimeout = useRef(null);
-
-  const handleSecretTap = () => {
-    const next = taps + 1;
-    setTaps(next);
-
-    clearTimeout(tapTimeout.current);
-    tapTimeout.current = setTimeout(() => setTaps(0), 1500);
-
-    if (next >= 3) {
-      router.push("/admin");
-    }
-  };
 
   useEffect(() => {
     const q = query(collection(db, "photos"), orderBy("createdAt", "desc"));
@@ -81,18 +62,20 @@ export default function GalleryPage() {
       }));
 
       const withHeights = await Promise.all(
-        docs.map(async (doc) => {
-          const displayUrl = optimizedUrl(doc.url, 500);
-          const measured = await measureHeight(displayUrl);
-          return {
-            id: doc.id,
-            img: displayUrl,
-            url: doc.url,
-            height: addVariety(measured, doc.id),
-            guestName: doc.guestName || "Anonymous",
-            guestWish: doc.guestWish || "",
-          };
-        })
+        docs
+          .filter((doc) => !doc.hidden) // skip photos marked hidden in admin
+          .map(async (doc) => {
+            const displayUrl = optimizedUrl(doc.url, 500);
+            const measured = await measureHeight(displayUrl);
+            return {
+              id: doc.id,
+              img: displayUrl,
+              url: doc.url,
+              height: addVariety(measured, doc.id),
+              guestName: doc.guestName || "Anonymous",
+              guestWish: doc.guestWish || "",
+            };
+          })
       );
 
       setItems(withHeights);
