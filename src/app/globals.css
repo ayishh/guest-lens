@@ -1,58 +1,201 @@
 @import "tailwindcss";
 
-/* Wedding theme colors — change once here, updates everywhere */
+/* Wedding theme — champagne gold on deep midnight navy */
 :root {
   --color-navy-deep: #0a1628;
   --color-navy: #14264a;
+  --color-navy-soft: #1c3358;
   --color-gold: #c9a24b;
   --color-gold-light: #d4af6a;
+  --color-champagne: #e8d5a3;
+  --color-blush: #c4a4a4;
   --color-ivory: #f6f1e7;
   --color-muted: #c9c2b3;
 }
 
 body {
   font-family: var(--font-sans), sans-serif;
+  color: var(--color-ivory);
 }
 
-/* Apply to headings that should use the elegant serif font */
 .font-display {
   font-family: var(--font-serif), serif;
 }
 
-/* Full-page dark navy background with a soft glow, used on every page */
+.font-script {
+  font-family: var(--font-script), cursive;
+}
+
+/* Full-page romantic atmosphere */
 .wedding-bg {
-  background: radial-gradient(
-    circle at 50% 15%,
-    var(--color-navy) 0%,
-    var(--color-navy-deep) 65%
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201, 162, 75, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 85% 90%, rgba(196, 164, 164, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 20%, var(--color-navy) 0%, var(--color-navy-deep) 70%);
+  /* Clip horizontal petal drift only — keep vertical scroll for gallery */
+  overflow-x: hidden;
+}
+
+.wedding-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, rgba(232, 213, 163, 0.55) 0%, transparent 100%),
+    radial-gradient(1px 1px at 28% 62%, rgba(201, 162, 75, 0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 72% 28%, rgba(246, 241, 231, 0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 74%, rgba(201, 162, 75, 0.45) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 88%, rgba(232, 213, 163, 0.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 58% 12%, rgba(246, 241, 231, 0.25) 0%, transparent 100%);
+  animation: twinkle 6s ease-in-out infinite alternate;
+}
+
+.wedding-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes twinkle {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+@keyframes float-petal {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.55;
+  }
+  88% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(110vh) translateX(40px) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+.invite-card {
+  background: linear-gradient(
+    165deg,
+    rgba(28, 51, 88, 0.72) 0%,
+    rgba(20, 38, 74, 0.55) 50%,
+    rgba(10, 22, 40, 0.65) 100%
+  );
+  border: 1px solid rgba(201, 162, 75, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(232, 213, 163, 0.06) inset,
+    0 24px 48px -20px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+}
+
+.ornament-corner {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border-color: var(--color-gold);
+  pointer-events: none;
+}
+
+.divider-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.divider-ornament .line {
+  height: 1px;
+  width: 2.5rem;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 162, 75, 0.55),
+    transparent
   );
 }
 
-/* The gold-bordered card that holds each page's content */
-.invite-card {
-  background: rgba(20, 38, 74, 0.5);
-  border: 1px solid rgba(201, 162, 75, 0.4);
+.divider-ornament .gem {
+  color: var(--color-gold);
+  font-size: 0.65rem;
+  animation: gem-pulse 3s ease-in-out infinite;
 }
 
-/* Solid gold button, e.g. "Upload Photos" */
+@keyframes gem-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
 .btn-gold {
-  background: var(--color-gold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, var(--color-gold-light) 0%, var(--color-gold) 100%);
   color: var(--color-navy-deep);
-  transition: background-color 0.2s ease;
-}
-.btn-gold:hover {
-  background: var(--color-gold-light);
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+  box-shadow: 0 4px 16px -4px rgba(201, 162, 75, 0.45);
 }
 
-/* Outlined gold button, e.g. "View Gallery" */
+.btn-gold:hover {
+  background: linear-gradient(180deg, #e0c078 0%, var(--color-gold-light) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -4px rgba(201, 162, 75, 0.55);
+}
+
+.btn-gold:active {
+  transform: translateY(0);
+}
+
 .btn-gold-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--color-gold);
   color: var(--color-gold);
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+    background-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
 }
+
 .btn-gold-outline:hover {
   background: var(--color-gold);
   color: var(--color-navy-deep);
+  transform: translateY(-1px);
+}
+
+/* Soft floating petals (decorative) */
+.petal {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 60% 40% 60% 40%;
+  background: linear-gradient(
+    135deg,
+    rgba(232, 213, 163, 0.35),
+    rgba(196, 164, 164, 0.25)
+  );
+  animation: float-petal linear infinite;
 }

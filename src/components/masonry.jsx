@@ -109,14 +109,14 @@ const Masonry = ({
     preloadImages(items.map(i => i.img)).then(() => setImagesReady(true));
   }, [items]);
 
-  const grid = useMemo(() => {
-    if (!width) return [];
+  const { grid, containerHeight } = useMemo(() => {
+    if (!width) return { grid: [], containerHeight: 0 };
     const colHeights = new Array(columns).fill(0);
     const gap = 16;
     const totalGaps = (columns - 1) * gap;
     const columnWidth = (width - totalGaps) / columns;
 
-    return items.map(child => {
+    const nextGrid = items.map(child => {
       const col = colHeights.indexOf(Math.min(...colHeights));
       const x = col * (columnWidth + gap);
       const height = child.height / 2;
@@ -125,6 +125,12 @@ const Masonry = ({
       colHeights[col] += height + gap;
       return { ...child, x, y, w: columnWidth, h: height };
     });
+
+    return {
+      grid: nextGrid,
+      // Absolute items don't stretch the parent — set height explicitly so the page can scroll
+      containerHeight: Math.max(0, ...colHeights),
+    };
   }, [columns, items, width]);
 
   const hasMounted = useRef(false);
@@ -200,7 +206,11 @@ const Masonry = ({
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full">
+    <div
+      ref={containerRef}
+      className="relative w-full"
+      style={{ height: containerHeight || undefined }}
+    >
       {grid.map(item => (
         <div
           key={item.id}
@@ -212,11 +222,11 @@ const Masonry = ({
           onMouseLeave={e => handleMouseLeave(item.id, e.currentTarget)}
         >
           <div
-            className="relative w-full h-full bg-cover bg-center rounded-[10px] shadow-[0px_10px_50px_-10px_rgba(0,0,0,0.2)] overflow-hidden cursor-pointer"
+            className="relative w-full h-full bg-cover bg-center rounded-sm shadow-[0px_12px_40px_-12px_rgba(0,0,0,0.45)] overflow-hidden cursor-pointer ring-1 ring-[#C9A24B]/25"
             style={{ backgroundImage: `url(${item.img})` }}
           >
             {colorShiftOnHover && (
-              <div className="color-overlay absolute inset-0 rounded-[10px] bg-gradient-to-tr from-pink-500/50 to-sky-500/50 opacity-0 pointer-events-none" />
+              <div className="color-overlay absolute inset-0 rounded-sm bg-gradient-to-tr from-[#C9A24B]/40 to-[#C4A4A4]/30 opacity-0 pointer-events-none" />
             )}
 
             {(item.guestName || item.guestWish) && (

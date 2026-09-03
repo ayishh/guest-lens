@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Masonry from "@/components/masonry.jsx";
 import CoupleNames from "@/components/CoupleName.jsx";
+import PageReveal from "@/components/PageReveal.jsx";
+import WeddingPetals from "@/components/WeddingPetals.jsx";
 
-// Measures a photo's real height (scaled to a standard width) so the
-// masonry grid can lay it out proportionally instead of guessing.
 function measureHeight(url, targetWidth = 400) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -16,13 +15,11 @@ function measureHeight(url, targetWidth = 400) {
       const ratio = img.naturalHeight / img.naturalWidth;
       resolve(Math.round(targetWidth * ratio));
     };
-    img.onerror = () => resolve(500); // fallback if a photo fails to load
+    img.onerror = () => resolve(500);
     img.src = url;
   });
 }
 
-// Turns a photo's id into the same "random" number every time — this is
-// what keeps a photo's size stable across refreshes instead of reshuffling.
 function hashString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -32,16 +29,13 @@ function hashString(str) {
   return Math.abs(hash);
 }
 
-// Nudges the real height taller or shorter, purely for visual variety.
 function addVariety(baseHeight, id) {
   const hash = hashString(id);
-  const factor = 0.65 + (hash % 100 / 100) * 0.85; // roughly 0.65x–1.5x
+  const factor = 0.65 + ((hash % 100) / 100) * 0.85;
   const varied = Math.round(baseHeight * factor);
-  return Math.min(560, Math.max(220, varied)); // keep it within a sane range
+  return Math.min(560, Math.max(220, varied));
 }
 
-// Asks Cloudinary to resize/compress on the fly, so the gallery doesn't
-// download full-resolution photos just to show small thumbnails.
 function optimizedUrl(url, width = 500) {
   return url.replace("/upload/", `/upload/w_${width},q_auto,f_auto/`);
 }
@@ -53,8 +47,6 @@ export default function GalleryPage() {
   useEffect(() => {
     const q = query(collection(db, "photos"), orderBy("createdAt", "desc"));
 
-    // onSnapshot keeps the gallery live — new uploads appear automatically
-    // without anyone needing to refresh the page.
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const docs = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -63,7 +55,7 @@ export default function GalleryPage() {
 
       const withHeights = await Promise.all(
         docs
-          .filter((doc) => !doc.hidden) // skip photos marked hidden in admin
+          .filter((doc) => !doc.hidden)
           .map(async (doc) => {
             const displayUrl = optimizedUrl(doc.url, 500);
             const measured = await measureHeight(displayUrl);
@@ -75,7 +67,7 @@ export default function GalleryPage() {
               guestName: doc.guestName || "Anonymous",
               guestWish: doc.guestWish || "",
             };
-          })
+          }),
       );
 
       setItems(withHeights);
@@ -86,30 +78,43 @@ export default function GalleryPage() {
   }, []);
 
   return (
-    <div
-      className="min-h-[100dvh] w-full flex justify-center px-4 sm:px-8 py-10 sm:py-14"
-      style={{
-        background:
-          "radial-gradient(circle at 50% 15%, #14264A 0%, #0A1628 65%)",
-      }}
-    >
+    <div className="wedding-bg min-h-[100dvh] w-full flex justify-center px-4 sm:px-8 py-10 sm:py-14">
+      <WeddingPetals count={6} />
+
       <div className="w-full max-w-5xl">
-        <div className="text-center mb-8 sm:mb-10">
-          <CoupleNames className="text-xs tracking-[0.3em] sm:tracking-[0.35em] mb-2" />
-          <h1 className="font-display text-2xl sm:text-3xl text-[#F6F1E7]">
-            Gallery
-          </h1>
-        </div>
+        <PageReveal>
+          <div data-reveal className="text-center mb-8 sm:mb-10">
+            <CoupleNames className="text-xs tracking-[0.3em] sm:tracking-[0.35em] mb-2" />
+            <p className="font-script text-[#E8D5A3] text-xl sm:text-2xl mb-1">
+              Seperti yang dilihat tetamu
+            </p>
+            <h1 className="font-display text-2xl sm:text-3xl text-[#F6F1E7] mb-0.5">
+              Album
+            </h1>
+            <p className="text-[#C9C2B3] text-[11px] tracking-[0.18em] uppercase">
+              As seen by our guests
+            </p>
+            <div className="divider-ornament">
+              <span className="line" />
+              <span className="gem">✦</span>
+              <span className="line" />
+            </div>
+          </div>
+        </PageReveal>
 
         {loading && (
           <p className="text-center text-[#C9C2B3] text-sm">
-            Loading photos...
+            Memuatkan… / Loading…
           </p>
         )}
 
         {!loading && items.length === 0 && (
-          <p className="text-center text-[#C9C2B3] text-sm">
-            No photos shared yet. Be the first to upload one!
+          <p className="text-center text-[#C9C2B3] text-sm px-4 leading-relaxed">
+            Belum ada gambar. Sila mulakan dengan selfie handsome/cantik.
+            <br />
+            <span className="text-[12px]">
+              No photos yet — break the ice with a flattering selfie.
+            </span>
           </p>
         )}
 
