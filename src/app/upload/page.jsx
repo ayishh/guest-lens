@@ -202,7 +202,7 @@ export default function UploadPage() {
               disabled={uploading}
               className="btn-gold w-full font-medium tracking-wide text-base sm:text-sm py-3.5 sm:py-2.5 rounded-sm disabled:opacity-50"
             >
-              {uploading ? "Memuat naik… / Uploading…" : "Muat Naik / Upload"}
+              {uploading ? "Memuat naik…" : "Muat Naik "}
             </button>
           </div>
         </div>

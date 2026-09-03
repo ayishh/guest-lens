@@ -3,9 +3,55 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import JSZip from "jszip";
 import { db, auth } from "@/lib/firebase";
+
+function safeFileName(name, fallback = "photo") {
+  const cleaned = (name || fallback)
+    .toString()
+    .trim()
+    .replace(/[^\w\-]+/g, "_")
+    .replace(/_+/g, "_")
+    .slice(0, 40);
+  return cleaned || fallback;
+}
+
+function extensionFromUrl(url) {
+  try {
+    const path = new URL(url).pathname;
+    const match = path.match(/\.(jpe?g|png|webp|gif)$/i);
+    return match ? match[1].toLowerCase().replace("jpeg", "jpg") : "jpg";
+  } catch {
+    return "jpg";
+  }
+}
+
+async function fetchPhotoBlob(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch photo (${res.status})`);
+  return res.blob();
+}
+
+function triggerDownload(blob, filename) {
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = objectUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(objectUrl);
+}
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
@@ -14,8 +60,9 @@ export default function AdminPage() {
   const [photos, setPhotos] = useState([]);
   const [busyId, setBusyId] = useState(null);
   const [filter, setFilter] = useState("all"); // "all" | "visible" | "hidden"
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState("");
 
-  // listen for real Firebase auth state, not just sessionStorage
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && sessionStorage.getItem("admin_authed") === "true") {
@@ -31,7 +78,7 @@ export default function AdminPage() {
       return;
     }
     try {
-      await signInAnonymously(auth); // this makes request.auth != null in Firestore rules
+      await signInAnonymously(auth);
       sessionStorage.setItem("admin_authed", "true");
       setAuthed(true);
       setError("");
@@ -75,11 +122,26 @@ export default function AdminPage() {
     }
   };
 
+  const handleDownloadOne = async (photo) => {
+    setBusyId(photo.id);
+    try {
+      const blob = await fetchPhotoBlob(photo.url);
+      const ext = extensionFromUrl(photo.url);
+      const name = safeFileName(photo.guestName, "guest");
+      triggerDownload(blob, `${name}-${photo.id.slice(0, 6)}.${ext}`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to download this photo. Please try again.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   // derive stats + filtered list from the full photos array
   const totalCount = photos.length;
   const hiddenCount = useMemo(
     () => photos.filter((p) => p.hidden).length,
-    [photos]
+    [photos],
   );
   const visibleCount = totalCount - hiddenCount;
 
@@ -88,6 +150,60 @@ export default function AdminPage() {
     if (filter === "visible") return photos.filter((p) => !p.hidden);
     return photos;
   }, [photos, filter]);
+
+  const handleDownloadAll = async () => {
+    if (filteredPhotos.length === 0) return;
+    if (
+      !confirm(
+        `Download ${filteredPhotos.length} photo(s) as a ZIP? This may take a moment on mobile.`,
+      )
+    ) {
+      return;
+    }
+
+    setDownloading(true);
+    setDownloadProgress("Preparing…");
+
+    try {
+      const zip = new JSZip();
+      const usedNames = new Set();
+
+      for (let i = 0; i < filteredPhotos.length; i++) {
+        const photo = filteredPhotos[i];
+        setDownloadProgress(`Fetching ${i + 1} of ${filteredPhotos.length}…`);
+
+        try {
+          const blob = await fetchPhotoBlob(photo.url);
+          const ext = extensionFromUrl(photo.url);
+          let base = `${String(i + 1).padStart(3, "0")}-${safeFileName(
+            photo.guestName,
+            "guest",
+          )}`;
+          let filename = `${base}.${ext}`;
+          let n = 2;
+          while (usedNames.has(filename)) {
+            filename = `${base}-${n}.${ext}`;
+            n += 1;
+          }
+          usedNames.add(filename);
+          zip.file(filename, blob);
+        } catch (err) {
+          console.error(`Skip failed photo ${photo.id}:`, err);
+        }
+      }
+
+      setDownloadProgress("Building ZIP…");
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const stamp = new Date().toISOString().slice(0, 10);
+      triggerDownload(zipBlob, `fatin-fazreen-photos-${filter}-${stamp}.zip`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to build the ZIP. Please try again.");
+    } finally {
+      setDownloading(false);
+      setDownloadProgress("");
+    }
+  };
 
   if (!authed) {
     return (
@@ -110,9 +226,7 @@ export default function AdminPage() {
             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
             className="w-full bg-transparent border border-[#C9A24B]/40 rounded-sm px-3 py-2.5 mb-3 text-[#F6F1E7] placeholder-[#C9C2B3]/60 text-sm text-center focus:outline-none focus:border-[#C9A24B]"
           />
-          {error && (
-            <p className="text-red-400 text-xs mb-3">{error}</p>
-          )}
+          {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
           <button
             onClick={handleLogin}
             className="btn-gold w-full text-sm py-2.5 rounded-sm"
@@ -133,7 +247,6 @@ export default function AdminPage() {
       }}
     >
       <div className="max-w-5xl mx-auto">
-        {/* nav — quick links to the rest of the site */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <Link
             href="/"
@@ -164,7 +277,6 @@ export default function AdminPage() {
           </h1>
         </div>
 
-        {/* stats bar */}
         <div className="flex items-center justify-center gap-6 sm:gap-10 mb-6">
           <div className="text-center">
             <p className="text-[#F6F1E7] text-xl sm:text-2xl font-display">
@@ -194,25 +306,37 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* filter buttons */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {[
-            { key: "all", label: "All" },
-            { key: "visible", label: "Visible" },
-            { key: "hidden", label: "Hidden" },
-          ].map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => setFilter(opt.key)}
-              className={`text-[11px] sm:text-xs px-3.5 py-1.5 rounded-sm border transition-colors ${
-                filter === opt.key
-                  ? "bg-[#C9A24B] text-[#0A1628] border-[#C9A24B] font-medium"
-                  : "border-[#C9A24B]/40 text-[#C9A24B] hover:bg-[#C9A24B]/10"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div className="flex items-center justify-center gap-2">
+            {[
+              { key: "all", label: "All" },
+              { key: "visible", label: "Visible" },
+              { key: "hidden", label: "Hidden" },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setFilter(opt.key)}
+                className={`text-[11px] sm:text-xs px-3.5 py-1.5 rounded-sm border transition-colors ${
+                  filter === opt.key
+                    ? "bg-[#C9A24B] text-[#0A1628] border-[#C9A24B] font-medium"
+                    : "border-[#C9A24B]/40 text-[#C9A24B] hover:bg-[#C9A24B]/10"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDownloadAll}
+            disabled={downloading || filteredPhotos.length === 0}
+            className="btn-gold text-[11px] sm:text-xs px-4 py-2 rounded-sm disabled:opacity-50"
+          >
+            {downloading
+              ? downloadProgress || "Downloading…"
+              : `Download All`}
+          </button>
         </div>
 
         {filteredPhotos.length === 0 && (
@@ -220,8 +344,8 @@ export default function AdminPage() {
             {filter === "hidden"
               ? "No hidden photos."
               : filter === "visible"
-              ? "No visible photos."
-              : "No photos yet."}
+                ? "No visible photos."
+                : "No photos yet."}
           </p>
         )}
 
@@ -231,6 +355,7 @@ export default function AdminPage() {
               key={photo.id}
               className="invite-card rounded-sm overflow-hidden p-2 flex flex-col h-full"
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo.url}
                 alt={photo.guestName}
@@ -243,7 +368,7 @@ export default function AdminPage() {
                 </p>
                 {photo.guestWish && (
                   <p className="text-[#C9C2B3] text-[11px] italic leading-snug line-clamp-3">
-                    "{photo.guestWish}"
+                    &quot;{photo.guestWish}&quot;
                   </p>
                 )}
                 {photo.hidden && (
@@ -253,24 +378,33 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <div className="mt-auto flex gap-1.5">
+              <div className="mt-auto flex flex-col gap-1.5">
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => handleToggleHide(photo.id, photo.hidden)}
+                    disabled={busyId === photo.id || downloading}
+                    className="flex-1 text-[11px] py-1.5 rounded-sm border border-[#C9A24B]/50 text-[#C9A24B] disabled:opacity-50"
+                  >
+                    {busyId === photo.id
+                      ? "..."
+                      : photo.hidden
+                        ? "Unhide"
+                        : "Hide"}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(photo.id)}
+                    disabled={busyId === photo.id || downloading}
+                    className="flex-1 text-[11px] py-1.5 rounded-sm border border-red-400/50 text-red-400 disabled:opacity-50"
+                  >
+                    {busyId === photo.id ? "..." : "Delete"}
+                  </button>
+                </div>
                 <button
-                  onClick={() => handleToggleHide(photo.id, photo.hidden)}
-                  disabled={busyId === photo.id}
-                  className="flex-1 text-[11px] py-1.5 rounded-sm border border-[#C9A24B]/50 text-[#C9A24B] disabled:opacity-50"
+                  onClick={() => handleDownloadOne(photo)}
+                  disabled={busyId === photo.id || downloading}
+                  className="w-full text-[11px] py-1.5 rounded-sm border border-[#C9A24B]/50 text-[#C9A24B] disabled:opacity-50"
                 >
-                  {busyId === photo.id
-                    ? "..."
-                    : photo.hidden
-                    ? "Unhide"
-                    : "Hide"}
-                </button>
-                <button
-                  onClick={() => handleDelete(photo.id)}
-                  disabled={busyId === photo.id}
-                  className="flex-1 text-[11px] py-1.5 rounded-sm border border-red-400/50 text-red-400 disabled:opacity-50"
-                >
-                  {busyId === photo.id ? "..." : "Delete"}
+                  {busyId === photo.id ? "..." : "Download"}
                 </button>
               </div>
             </div>

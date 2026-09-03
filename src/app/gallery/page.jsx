@@ -86,14 +86,14 @@ export default function GalleryPage() {
           <div data-reveal className="text-center mb-8 sm:mb-10">
             <CoupleNames className="text-xs tracking-[0.3em] sm:tracking-[0.35em] mb-2" />
             <p className="font-script text-[#E8D5A3] text-xl sm:text-2xl mb-1">
-              Seperti yang dilihat tetamu
+              Momen-momen majlis
             </p>
             <h1 className="font-display text-2xl sm:text-3xl text-[#F6F1E7] mb-0.5">
               Album
             </h1>
-            <p className="text-[#C9C2B3] text-[11px] tracking-[0.18em] uppercase">
-              As seen by our guests
-            </p>
+            {/* <p className="text-[#C9C2B3] text-[11px] tracking-[0.18em] uppercase">
+              As se
+            </p> */}
             <div className="divider-ornament">
               <span className="line" />
               <span className="gem">✦</span>
