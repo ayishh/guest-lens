@@ -244,7 +244,7 @@ const Masonry = ({
                   </p>
                 )}
                 {item.guestWish && (
-                  <p className="text-[#F6F1E7] text-[10px] sm:text-[11px] italic leading-snug line-clamp-2 mt-0.5">
+                  <p className="text-[#F6F1E7] text-[10px] sm:text-[11px] italic leading-snug line-clamp-5 mt-0.5">
                     "{item.guestWish}"
                   </p>
                 )}
